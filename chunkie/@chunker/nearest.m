@@ -169,7 +169,7 @@ for i = 1:length(ich)
     ri = (lege.exev(t0,rc)).';
     disti = sqrt(sum((ri(:)-ref(:)).^2,1));
     if (ifend < iextra)
-        warning('newton failed in nearest');
+%         warning('newton failed in nearest');
 %          deltat
 %          disti
 %          jac

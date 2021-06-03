@@ -1,4 +1,4 @@
-function fints = chunkerkerneval(chnkr,kern,dens,targs,opts)
+function [fints, krnmt] = chunkerkerneval(chnkr,kern,dens,targs,opts)
 %CHUNKERKERNEVAL compute the convolution of the integral kernel with
 % the density defined on the chunk geometry. 
 %
@@ -41,6 +41,7 @@ function fints = chunkerkerneval(chnkr,kern,dens,targs,opts)
 
 % determine operator dimensions using first two points
 
+krnmt = 0;
 
 srcinfo = []; targinfo = [];
 srcinfo.r = chnkr.r(:,1); srcinfo.d = chnkr.d(:,1); 
@@ -77,7 +78,7 @@ optsadap = []; optsadap.quadgkparams = quadgkparams;
 optsadap.eps = eps;
 
 if forcesmooth
-    fints = chunkerkerneval_smooth(chnkr,kern,opdims,dens,targs, ...
+    [fints, krnmt] = chunkerkerneval_smooth(chnkr,kern,opdims,dens,targs, ...
         [],opts);
     return
 end
@@ -103,7 +104,7 @@ end
 
 
 
-function fints = chunkerkerneval_smooth(chnkr,kern,opdims,dens, ...
+function [fints, krnmt] = chunkerkerneval_smooth(chnkr,kern,opdims,dens, ...
     targs,flag,opts)
 
 flam = true;
@@ -129,6 +130,8 @@ fints = zeros(opdims(1)*nt,1);
 
 targinfo = []; targinfo.r = targs;
 
+krnmt = zeros(nt,0);
+
 % assume smooth weights are good enough
 
 if ~flam
@@ -145,6 +148,7 @@ if ~flam
             srcinfo.d = chnkr.d(:,:,i); srcinfo.d2 = chnkr.d2(:,:,i);
             kernmat = kern(srcinfo,targinfo);
             fints = fints + kernmat*densvals;
+            krnmt = cat(2, krnmt, kernmat);
         end
     else
         % ignore interactions in flag array

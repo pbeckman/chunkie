@@ -20,13 +20,13 @@ zk = norm(kvec);
 % discretize domain
 
 cparams = [];
-cparams.eps = 1.0e-10;
+cparams.eps = 1.0e-7;
 cparams.nover = 0;
 cparams.maxchunklen = 4.0/zk; % setting a chunk length helps when the
                               % frequency is known
 pref = []; 
 pref.k = 16;
-narms =5;
+narms = 5;
 amp = 0.25;
 start = tic; chnkr = chunkerfunc(@(t) starfish(t,narms,amp),cparams,pref); 
 t1 = toc(start);
@@ -44,9 +44,6 @@ plot(chnkr,'-x')
 hold on
 quiver(chnkr)
 axis equal
-
-%
-
 
 % solve and visualize the solution
 
@@ -117,7 +114,6 @@ axis tight
 colormap(redblue)
 caxis([-maxu,maxu])
 title('$u_{in}$','Interpreter','latex','FontSize',24)
-
 
 subplot(1,3,2)
 zztarg = nan(size(xxtarg));
