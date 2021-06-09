@@ -24,6 +24,7 @@ cparams.eps = 1.0e-7;
 cparams.nover = 0;
 cparams.maxchunklen = 4.0/zk; % setting a chunk length helps when the
                               % frequency is known
+                              
 pref = []; 
 pref.k = 16;
 narms = 5;
