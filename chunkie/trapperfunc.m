@@ -1,4 +1,4 @@
-function trap = trapfunc(fcurve,cparams,pref)
+function trap = trapperfunc(fcurve,cparams,pref)
 %TRAPFUNC discretize a curve using uniform points in 
 % parameter space. 
 %
@@ -52,6 +52,7 @@ trap.r = rs;
 trap.d = ds;
 trap.d2 = d2s;
 trap.h = h;
+trap.n = normals(trap);
 
 end
 

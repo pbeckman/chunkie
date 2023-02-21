@@ -1,0 +1,12 @@
+
+*~
+*#
+chunkie/demo-ignore/*
+*.save
+dev/*
+
+# Mac OS files
+*.DS_Store*
+
+# Matlab autosaves
+*.asv
