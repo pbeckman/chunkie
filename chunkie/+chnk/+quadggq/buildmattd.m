@@ -3,8 +3,6 @@ function [spmat] = buildmattd(chnkr,kern,opdims,type,auxquads,ilist)
 % description of boundary, using special quadrature for self
 % and neighbor panels.
 %
-%  
-
 % type: the type of singularity present in the kernel
 % 
 % NB: if type and auxquads are both present then auxquads will be used 
@@ -32,17 +30,14 @@ if (chnkr.hasdata)
     data = chnkr.data;
 end
 
-[~,wts] = lege.exps(k);
-
-if (nargin == 4)
-    if strcmpi(type,'log')
-        auxquads = chnk.quadggq.setuplogquad(k,opdims);
-    end
-end 
-
-if (nargin<4)
-     auxquads = chnk.quadggq.setuplogquad(k,opdims);
+if nargin < 4 || isempty(type)
+    type = 'log';
 end
+if nargin < 5 || isempty(auxquads)
+    auxquads = chnk.quadggq.setup(k,type);
+end
+
+temp = eye(opdims(2));
 
 xs1 = auxquads.xs1;
 wts1 = auxquads.wts1;
@@ -50,16 +45,20 @@ xs0 = auxquads.xs0;
 wts0 = auxquads.wts0;
 
 ainterp1 = auxquads.ainterp1;
-ainterp1kron = auxquads.ainterp1kron;
+ainterp1kron = kron(ainterp1,temp);
 
 ainterps0 = auxquads.ainterps0;
-ainterps0kron = auxquads.ainterps0kron;
+ainterps0kron = cell(k,1);
+for j = 1:k
+    ainterps0kron{j} = kron(ainterps0{j},temp);
+end
 
 % do smooth weight for all
 %sysmat = chnk.quadnative.buildmat(chnkr,kern,opdims,1:nch,1:nch,wts);
 mmat = k*nch*opdims(1); nmat = k*nch*opdims(2);
 
 nnz = k*nch*opdims(1)*k*3*opdims(2);
+nz_found = 0;
 nnz1 = k*opdims(1)*k*opdims(2);
 v = zeros(nnz,1);
 iind = zeros(nnz,1);
@@ -97,6 +96,7 @@ for j = 1:nch
             induse = ict:ict+nnz1-1;
             iind(induse) = ii1(:)+imat;
             jind(induse) = jj1(:)+jmat;
+            nz_found = nz_found + numel(induse);
             v(induse) = submat(:);
             ict = ict + nnz1;
         end
@@ -114,6 +114,7 @@ for j = 1:nch
         induse = ict:ict+nnz1-1;
         iind(induse) = ii1(:)+imat;
         jind(induse) = jj1(:)+jmat;
+        nz_found = nz_found + numel(induse);
         v(induse) = submat(:);
         ict = ict + nnz1;
       end
@@ -132,12 +133,16 @@ for j = 1:nch
       induse = ict:(ict+nnz1-1);
       iind(induse) = ii1(:)+imat;
       jind(induse) = jj1(:)+jmat;
+      nz_found = nz_found + numel(induse);
       v(induse) = submat(:);
       ict = ict + nnz1;
     end
     
 end
 
+iind = iind(1:nz_found);
+jind = jind(1:nz_found);
+v    = v(1:nz_found);
 spmat = sparse(iind,jind,v,mmat,nmat);
 	 
 

@@ -7,16 +7,7 @@ classdef chunker
 % author: Travis Askham (askhamwhat@gmail.com)
 
     properties(Access=private)
-        rstor
-        dstor
-        d2stor
-        adjstor
-        hstor
-        nstor
-        datastor
         verttol
-        wstor
-        tstor
     end
     properties(Dependent,Access=public)
         r
@@ -27,12 +18,23 @@ classdef chunker
         n
         data
     end
+    properties(Access=public)
+        rstor
+        dstor
+        d2stor
+        adjstor
+        hstor
+        nstor
+        datastor
+    end        
     properties(SetAccess=private)
         nchmax
         nch
         nchstor
         hasdata
         vert
+        wstor
+        tstor
     end
     properties(Dependent,SetAccess=private)
         k
@@ -44,13 +46,19 @@ classdef chunker
     end
     
     methods
-        function obj = chunker(p)
-            if nargin < 1
+        function obj = chunker(p,t,w)
+            if nargin < 1 || isempty(p)
                 p = chunkerpref();
             else
                 p = chunkerpref(p);
             end
             k = p.k;
+            if nargin < 3
+                [obj.tstor,obj.wstor] = lege.exps(k);
+            else
+                obj.tstor = t;
+                obj.wstor = w;
+            end
             dim = p.dim;
             nchmax = p.nchmax;
             nchstor = p.nchstor;
@@ -67,7 +75,7 @@ classdef chunker
             obj.vert = {};
             obj.hasdata = false;
             obj.datastor = [];
-            [obj.tstor,obj.wstor] = lege.exps(k);
+            
         end
         
         function r = get.r(obj)
@@ -193,6 +201,9 @@ classdef chunker
             end
         end
         
+        function obj = clearverts(obj)
+            obj.vert = {};
+        end
         function obj = addvert(obj,newvert,toleft)
         %ADDVERT add vertex label to chunker object 
         %
@@ -231,7 +242,7 @@ classdef chunker
                 if (errvertends > tol)
                     warning('chunkie:badvertchunks', ...
                      [sprintf('chunkends far from centroid %5.2e\n',...
-                     errvertends),
+                     errvertends),...
                      'consider resetting verttol for chunker']);
                 end
                 
@@ -275,6 +286,7 @@ classdef chunker
         [inds,adjs,info] = sortinfo(obj)
         [re,taue] = chunkends(obj,ich)
         flag = flagnear(obj,pts,opts)
+        kappa = signed_curvature(obj)
     end
     methods(Static)
         obj = chunkerfunc(fcurve,varargin)

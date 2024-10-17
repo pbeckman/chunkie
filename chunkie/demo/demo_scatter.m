@@ -53,10 +53,8 @@ axis equal
 
 % build CFIE
 
-fkern = @(s,t) chnk.helm2d.kern(zk,s,t,'c',1);
-opdims(1) = 1; opdims(2) = 1;
-opts = [];
-start = tic; sysmat = chunkermat(chnkr,fkern,opts);
+fkern = kernel('helm','c',zk,[1,-zk*1i]);
+start = tic; sysmat = chunkermat(chnkr,fkern);
 t1 = toc(start);
 
 fprintf('%5.2e s : time to assemble matrix\n',t1)
