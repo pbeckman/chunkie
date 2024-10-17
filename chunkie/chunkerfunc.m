@@ -100,7 +100,7 @@ end
 
 % discover number of outputs
 try         
-    [r,d,d2] = fcurve(t);
+    [r,d,d2] = fcurve(ta);
     nout = 3;
 catch
     try 
