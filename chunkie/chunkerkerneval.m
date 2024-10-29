@@ -20,6 +20,10 @@ function [fints, krnmt] = chunkerkerneval(chnkr,kern,dens,targs,opts)
 %       opts.accel - if = true, use specialized fmm if defined 
 %                   for the kernel or use a generic FLAM fmm to accelerate
 %                   the smooth part of the eval. if false do direct. (true)
+%       opts.proxybylevel - if = true, determine the number of
+%                   necessary proxy points adaptively at each level of the 
+%                   factorization in ifmm. Typically needed only for 
+%                   moderate / high frequency problems. (false)
 %       opts.forcesmooth - if = true, only use the smooth integration rule
 %                           (false)
 %       opts.forceadap - if = true, only use adaptive quadrature (false)
@@ -70,6 +74,7 @@ opts_use.flam = true;
 opts_use.accel = true;
 opts_use.fac = 1.0;
 opts_use.eps = 1e-12;
+opts_use.proxybylevel = false;
 if isfield(opts,'forcesmooth'); opts_use.forcesmooth = opts.forcesmooth; end
 if isfield(opts,'forceadap'); opts_use.forceadap = opts.forceadap; end
 if isfield(opts,'forcepquad'); opts_use.forcepquad = opts.forcepquad; end
@@ -80,6 +85,7 @@ end
 if isfield(opts,'accel'); opts_use.accel = opts.accel; end
 if isfield(opts,'fac'); opts_use.fac = opts.fac; end
 if isfield(opts,'eps'); opts_use.eps = opts.eps; end
+if isfield(opts,'proxybylevel'); opts_use.proxybylevel = opts.proxybylevel; end
 
 [dim,~] = size(targs);
 
@@ -269,18 +275,28 @@ else
         matfun = @(i,j) chnk.flam.kernbyindexr(i,j,targs,chnkr,wts,kerneval, ...
             opdims);
     
-
+        verb = false;
         width = max(abs(max(chnkr)-min(chnkr)))/3;
         tmax = max(targs(:,:),[],2); tmin = min(targs(:,:),[],2);
         wmax = max(abs(tmax-tmin));
         width = max(width,wmax/3);  
-        npxy = chnk.flam.nproxy_square(kerneval,width);
-        [pr,ptau,pw,pin] = chnk.flam.proxy_square_pts(npxy);
+        % npxy = chnk.flam.nproxy_square(kerneval,width);
+        % [pr,ptau,pw,pin] = chnk.flam.proxy_square_pts(npxy);
 
-        pxyfun = @(rc,rx,cx,slf,nbr,l,ctr) chnk.flam.proxyfunr(rc,rx,slf,nbr,l, ...
-            ctr,chnkr,wts,kerneval,opdims,pr,ptau,pw,pin);
+        % pxyfun = @(rc,rx,cx,slf,nbr,l,ctr) chnk.flam.proxyfunr(rc,rx,slf,nbr,l, ...
+        %     ctr,chnkr,wts,kerneval,opdims,pr,ptau,pw,pin);
+        optsnpxy = []; optsnpxy.rank_or_tol = opts.eps;
+        pxyfun = @(lvl) proxyfunrbylevel(width,lvl,optsnpxy, ...
+            chnkr,wts,kerneval,opdims,verb && opts.proxybylevel);
+        if ~opts.proxybylevel
+            % if not using proxy-by-level, always use pxyfunr from level 1
+            pxyfun = pxyfun(1);
+        end
 
-        optsifmm=[]; optsifmm.Tmax=Inf;
+        optsifmm=[]; 
+        optsifmm.Tmax=Inf; 
+        optsifmm.proxybylevel = opts.proxybylevel;
+        optsifmm.verb = verb;
         F = ifmm(matfun,targsflam,xflam1,200,1e-14,pxyfun,optsifmm);
         fints = ifmm_mv(F,dens(:),matfun);
     else
@@ -380,4 +396,17 @@ else % do only those flagged
     
 end
 
+end
+
+function pxyfunrlvl = proxyfunrbylevel(width,lvl,optsnpxy, ...
+    chnkr,wts,kern,opdims,verb ...
+    )
+    npxy = chnk.flam.nproxy_square(kern,width/2^(lvl-1),optsnpxy);
+    [pr,ptau,pw,pin] = chnk.flam.proxy_square_pts(npxy);
+
+    if verb; fprintf('%3d | npxy = %i\n', lvl, npxy); end
+
+    % return the FLAM-style pxyfunr corresponding to lvl
+    pxyfunrlvl = @(rc,rx,cx,slf,nbr,l,ctr) chnk.flam.proxyfunr(rc,rx,slf,nbr,l, ...
+        ctr,chnkr,wts,kern,opdims,pr,ptau,pw,pin);
 end

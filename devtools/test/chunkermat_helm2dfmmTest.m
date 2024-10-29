@@ -7,7 +7,7 @@ clearvars; close all;
 iseed = 8675309;
 rng(iseed);
 
-addpaths_loc();
+% addpaths_loc();
 
 cparams = [];
 cparams.eps = 1.0e-10;

@@ -7,7 +7,7 @@ clearvars; close all;
 iseed = 8675309;
 rng(iseed);
 
-addpaths_loc();
+% addpaths_loc();
 
 nverts = 3; 
 verts = exp(1i*2*pi*(0:(nverts-1))/nverts);
